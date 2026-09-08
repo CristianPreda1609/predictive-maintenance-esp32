@@ -1,158 +1,131 @@
-# Mentenanță predictivă pe ESP32 cu rețea convoluțională 1D
+# Predictive maintenance on ESP32 with a 1D convolutional network
 
-Lucrare de licență. Sistemul clasifică în timp real starea unui motor de curent continuu
-pornind de la vibrațiile măsurate cu un accelerometru/giroscop MPU6050. Inferența rulează
-direct pe microcontroler (ESP32), fără conexiune la un server.
+Bachelor's thesis project. The system classifies the running state of a DC motor in real
+time from vibration measured with an MPU6050 accelerometer/gyroscope. Inference runs
+directly on the microcontroller with TensorFlow Lite for Microcontrollers, with no server
+involved, and the current classification is shown on a web page hosted by the board
+itself.
 
-Cele cinci clase: `0 = Repaus`, `1 = Normal`, `2 = Dezechilibru`, `3 = Frecare`,
-`4 = Slăbit` (fixare slabă).
+Five classes, named in the code as `Repaus`, `Normal`, `Dezechilibru`, `Frecare`,
+`Slabit` — idle, healthy, imbalance, friction, loose mounting.
 
-Parametri de achiziție și model, identici între colectare, antrenare și inferență:
+The thesis itself is written in Romanian (`lucrare/`), and so are the source comments.
+This documentation is in English.
 
-| Parametru | Valoare |
+| Parameter | Value |
 |---|---|
-| Frecvență eșantionare | 100 Hz |
-| Caracteristici | `ax, ay, az, gx, gy, gz` (m/s², rad/s) |
-| Fereastră / pas | 128 / 64 (50% suprapunere) |
-| Senzor | MPU6050, ±16 G, ±500 °/s, filtru 21 Hz |
-| Pini | I2C pe 21/22, PWM motor pe 14 |
-| Placă | ESP32 DOIT DevKit v1 |
+| Sampling rate | 100 Hz |
+| Features | `ax, ay, az, gx, gy, gz` (m/s², rad/s) |
+| Window / stride | 128 / 64 (50% overlap) |
+| Sensor | MPU6050, ±16 G, ±500 °/s, 21 Hz filter |
+| Pins | I2C on 21/22, motor PWM on 14 |
+| Board | ESP32 DOIT DevKit v1 |
 
-## Montaj experimental
+## Experimental setup
 
-![Schema electrică](lucrare/images/Schema_Electrica.png)
+![Wiring diagram](lucrare/images/Schema_Electrica.png)
 
-Motorul de curent continuu e comandat prin PWM de la ESP32 (pin 14), iar senzorul
-MPU6050 e fixat pe carcasa motorului și citit pe I2C. Cele patru defecte au fost provocate
-fizic, nu simulate: masă adăugată excentric pe ax (dezechilibru), contact abraziv pe
-carcasă (frecare) și șuruburi de prindere slăbite (fixare slabă).
+The DC motor is driven by PWM from the ESP32 (pin 14), and the MPU6050 is bolted to the
+motor housing and read over I2C. The four fault conditions were induced physically, not
+simulated: an off-centre mass added to the shaft (imbalance), an abrasive contact against
+the housing (friction), and loosened mounting screws (loose fixing).
 
-| Normal | Dezechilibru | Frecare | Fixare slabă |
+| Healthy | Imbalance | Friction | Loose mounting |
 |---|---|---|---|
 | ![](lucrare/images/Montaj_normal.jpeg) | ![](lucrare/images/Dezechilibru.jpeg) | ![](lucrare/images/Frecare.jpeg) | ![](lucrare/images/Slab_fixat.jpeg) |
 
-Fiecare condiție a fost înregistrată la șase turații (PWM 160, 180, 200, 220, 240, 255),
-câte ~5 minute per combinație, plus o înregistrare de zgomot cu motorul oprit.
+Each condition was recorded at six motor speeds (PWM 160, 180, 200, 220, 240, 255), about
+five minutes per combination, plus one recording of the sensor noise floor with the motor
+stopped.
 
-## Rezultate
+## Results
 
-Setul sesiunii 1, împărțit secvențial 80/20 în interiorul fiecărei combinații
-clasă × turație. Ferestre de 128 eșantioane: 6.727 la antrenare, 1.681 la test.
+Session 1 data, split sequentially 80/20 within each class × speed combination. Windows of
+128 samples: 6,727 for training, 1,681 for test.
 
-| Metodă | Acuratețe |
+| Method | Accuracy |
 |---|---|
-| Prag fix pe amplitudine, fără ML | 0,28 |
-| K-Means pe caracteristici extrase | 0,85 |
-| SVM | 1,00 |
-| Random Forest | 1,00 |
-| CNN 1D | 1,00 |
-| CNN 2D | 1,00 |
-| CNN 3D | 1,00 |
+| Fixed amplitude threshold, no ML | 0.28 |
+| K-Means on extracted features | 0.85 |
+| SVM | 1.00 |
+| Random Forest | 1.00 |
+| CNN 1D | 1.00 |
+| CNN 2D | 1.00 |
+| CNN 3D | 1.00 |
 
-Pragul fix a fost evaluat pe eșantioane individuale (8.411), restul pe ferestre (1.681).
-Matricele de confuzie sunt în `lucrare/images/` (`baseline_cm.png`, `k_means_cm.png`,
+The fixed threshold was evaluated per sample (8,411), the rest per window (1,681).
+Confusion matrices are in `lucrare/images/` (`baseline_cm.png`, `k_means_cm.png`,
 `svm_cm.png`, `random_forest_cm.png`, `cnn_cm.png`).
 
-| CNN 1D | Prag fix |
+| CNN 1D | Fixed threshold |
 |---|---|
 | ![](lucrare/images/cnn_cm.png) | ![](lucrare/images/baseline_cm.png) |
 
-Diferența dintre 0,28 și 1,00 arată că defectele nu se separă pe amplitudinea brută a
-vibrației, ci pe forma semnalului. Metodele clasice pe caracteristici extrase
-(medie, deviație standard, RMS) ajung și ele la același rezultat, deci problema nu cere
-neapărat o rețea; CNN 1D a fost aleasă pentru că nu necesită extragere manuală de
-caracteristici și încape pe microcontroler.
+The gap between 0.28 and 1.00 shows that the faults do not separate on raw vibration
+amplitude but on the shape of the signal. Classical methods on extracted features (mean,
+standard deviation, RMS) reach the same result, so the problem does not strictly require a
+neural network; the CNN 1D was chosen because it needs no hand-crafted feature extraction
+and still fits on the microcontroller.
 
-Acuratețea de 1,00 trebuie citită cu rezerva că împărțirea e secvențială: ferestrele
-vecine se suprapun 50% și provin din aceeași înregistrare continuă, deci setul de test
-nu e complet independent de cel de antrenare.
+The 1.00 figures should be read with one caveat: the split is sequential, neighbouring
+windows overlap by 50% and come from the same continuous recording, so the test set is not
+fully independent of the training set.
 
-CNN 1D are 3.093 de parametri; după cuantizare INT8 modelul ocupă 11.560 de octeți în
-memoria flash a plăcii.
+The CNN 1D has 3,093 parameters; after INT8 quantisation the model occupies 11,560 bytes
+of flash.
 
-## Structura
+## Repository layout
 
-| Folder | Conținut |
+Each directory has its own README with details.
+
+| Directory | Contents |
 |---|---|
-| `firmware/` | Inferență pe ESP32, varianta finală, modulară, cu dashboard web pe SoftAP |
-| `firmware-legacy/` | Prima variantă, monolitică; conține și varianta cu ecran OLED |
-| `colectare-date/` | Firmware de achiziție, scripturi de logare și datele brute |
-| `model/` | Notebook-uri de antrenare, artefacte de model, scripturi de analiză |
-| `lucrare/` | Sursele LaTeX ale lucrării și `main.pdf` |
-| `docs/` | Declarație pe proprie răspundere, referat coordonator |
+| [`firmware/`](firmware/) | ESP32 inference, final modular version, with a web dashboard over SoftAP |
+| [`firmware-legacy/`](firmware-legacy/) | First version, monolithic; also holds the OLED variant |
+| [`colectare-date/`](colectare-date/) | Acquisition firmware, logging scripts and the raw data |
+| [`model/`](model/) | Training notebooks, model artefacts, analysis scripts |
+| [`lucrare/`](lucrare/) | LaTeX sources of the thesis and `main.pdf` |
+| [`docs/`](docs/) | Administrative documents |
 
-## Proveniența datelor și a modelelor
+## Data and model provenance
 
-Au existat două sesiuni de colectare, cu montaje diferite ale senzorului. Fiecare are
-propriul scaler (`StandardScaler`), iar **scalerul nu este interschimbabil între
-sesiuni** — un scaler nepotrivit deplasează distribuția de intrare și predicțiile devin
-greșite fără eroare vizibilă.
+There were two acquisition sessions, with the sensor mounted differently. Each has its own
+`StandardScaler`, and **the scaler is not interchangeable between sessions** — a mismatched
+scaler shifts the input distribution and the predictions become wrong without any visible
+error.
 
-| Firmware | Date brute | Rânduri | `kInputMean[0]` din `preprocessing.h` |
+| Firmware | Raw data | Rows | `kInputMean[0]` in `preprocessing.h` |
 |---|---|---|---|
-| `firmware/` | `colectare-date/date_raw_2026_06/` | 324.064 | `0.002488` |
-| `firmware-legacy/` | `colectare-date/date_raw_2025_12/` | 538.327 | `0.163085` |
+| `firmware/` | `colectare-date/date_raw_2026_06/` | 324,064 | `0.002488` |
+| `firmware-legacy/` | `colectare-date/date_raw_2025_12/` | 538,327 | `0.163085` |
 
-Artefactele sesiunii 1 stau în `model/`, cele ale sesiunii 2 în `model/run_2026_06/`.
+Session 1 artefacts live in `model/`, session 2 artefacts in `model/run_2026_06/`.
 
-## Cum se rulează
-
-### 1. Colectarea datelor
-
-Se încarcă `colectare-date/firmware/` pe ESP32 (PlatformIO). Placa trimite pe serial, la
-100 Hz, linii `ax,ay,az,gx,gy,gz,temp`.
+## Pipeline
 
 ```
-cd colectare-date
-python date_logger.py     # scrie un CSV per condiție și turație
+colectare-date/          model/                         firmware/
+  acquisition fw   -->     date_master.py         -->     model_cnn1d_int8.h
+  date_logger.py           CNN1_2_3D.ipynb                preprocessing.h
+  date_raw_*/              (train + quantise)             (on-device inference)
 ```
 
-Portul serial, numele fișierului, eticheta și durata se setează în capul scriptului,
-înainte de fiecare înregistrare.
+1. Flash the acquisition firmware, record one CSV per condition and speed.
+2. Merge the raw CSVs into a single dataset with `date_master.py`.
+3. Train and export the quantised model in `model/CNN1_2_3D.ipynb`.
+4. Copy the generated `model_cnn1d_int8.h` and `preprocessing.h` into `firmware/include/`
+   and flash the board.
 
-### 2. Unificarea într-un singur set de date
+Full instructions are in the README of each directory.
 
-`dataset_final.csv` nu este ținut în repo; se regenerează din datele brute:
+## Requirements
 
-```
-cd colectare-date
-python date_master.py
-```
+- PlatformIO (ESP32 Arduino framework) for the three firmware projects
+- Python 3 with `pandas`, `numpy`, `scikit-learn`, `tensorflow`, `matplotlib`, `scipy`,
+  `pyserial`
+- XeLaTeX (the thesis uses `fontspec`, so `pdflatex` will not build it)
 
-Scriptul deduce eticheta și turația din numele fișierului și scrie `dataset_final.csv`
-(538.327 rânduri pentru sesiunea 1). Pentru sesiunea a doua se schimbă
-`MASTER_DIRECTORY` în `date_raw_2026_06`.
+## Notes
 
-Fișierul rezultat se copiază în `model/`, respectiv `model/run_2026_06/`.
-
-### 3. Antrenarea
-
-`model/CNN1_2_3D.ipynb` compară variantele CNN 1D, 2D și 3D și exportă modelul cuantizat
-INT8. Setul de date se alege din variabila `DATASET` din prima celulă. Notebook-ul scrie
-`model_cnn1d_int8.h` (tabloul de greutăți) și parametrii scalerului.
-
-`model/analiza_vibratii.py` face analiza exploratorie: scorul de vibrație pe clase și
-spectrul FFT. `model/data_view.py` verifică balanța claselor.
-
-### 4. Rularea pe placă
-
-`model_cnn1d_int8.h` și `preprocessing.h` se copiază în `firmware/include/`, apoi:
-
-```
-cd firmware
-pio run -t upload
-```
-
-Placa pornește un punct de acces WiFi (`Mentenanta-ESP32`). Dashboard-ul cu predicția,
-probabilitățile pe clase și osciloscopul celor șase canale e la `http://192.168.4.1`.
-
-Achiziția și inferența rulează pe Core 1, serverul web pe Core 0. Cu `DIAGNOSTIC_MODE 1`
-firmware-ul afișează pe serial media ferestrei curente față de media de antrenare — util
-pentru a prinde un senzor remontat altfel decât la colectare.
-
-## Note
-
-- `firmware-legacy/src/` conține trei variante cu `setup()`/`loop()`; se compilează una
-  singură, selectată din `build_src_filter` în `platformio.ini`.
-- Modelele mari (`.keras`) și seturile de date unificate nu intră în repo; se regenerează
-  din notebook-uri, respectiv din `date_raw`.
+Unified datasets (`dataset_final.csv`) and large `.keras` models are not tracked; they are
+regenerated from `date_raw` and from the notebooks respectively.
