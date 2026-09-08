@@ -1,0 +1,13 @@
+\chapter{Concluzii}
+\section{Concluzii Generale}
+	
+	Prin această lucrare am abordat o temă de actualitate și foarte importantă în contextul Industriei 4.0 reprezentând tranziția de la mentenanță reactivă la cea predictivă. Obiectivul principal a fost proiectarea, implementarea și validarea unui sistem embedded capabil de monitorizare în timp real a unui echipament mecanic și identificarea defectelor incipiente fără infrastructura Cloud.
+	
+	Am dezvoltat o arhitectură robustă din componente ieftine prin folosirea ESP32 și a senzorului MPU6050, împreună cu sistemul de operare FreeRTOS permițând astfel exploatarea arhitecturii dual-core pentru sarcinile sincrone și cele asincrone. Iar prin intermediul sistemului de referință bazat pe praguri decizionale și deviație standard, am reușit să demonstrez necesitatea unei rețele neuronale pentru detectarea anomaliilor complexe, acesta obținând o acuratețe de doar 28\%. În plus rețeaua convoluțională unidimensională a reușit să extragă caracteristici spațio-temporale din date brute, eliminând astfel necesitatea etapei costisitoare de preprocesare a datelor în timp real specifică algoritmilor clasici, obținând o acuratețe de validare de peste 99,9\%. Iar în cele din urmă portarea cu succes a modelului pe microcontroler reprezintă unul dintre succesele majore. Datorită tehnicii de cuantizare post-antrenament INT8 prin framework-ul TensorFlow Lite for Microcontrollers \cite{tensorflow:tflitemicro_github}, memoria necesară rețelei a fost redusă la aprox. 11,5 KB, și necesită doar 35 KB RAM pentru operare.
+	
+	În concluzie, sistemul realizat care îndeplinește cerințele demonstrează că paradigma Edge AI este o soluție viabilă și eficientă energetic pentru monitorizarea sistemelor mecanice.
+	
+\section{Direcții Viitoare de Dezvoltare}
+	
+	Sistemul propus poate fi extins prin testarea pe echipamente industriale reale, făcând tranziția de la un motor DC tip TT la un motor industrial asincron trifazat, pentru a recalibra modelul pe zgomot electromagnetic și sarcini mecanice mari. O altă direcție viitoare o reprezintă implementarea comunicației LoRaWAN, modulul Wi-Fi poate fi înlocuit sau suplimentat cu modulul LoRa, acest lucru ar fi ideal pentru transmiterea datelor pe distanțe lungi deoarece modelul convoluțional transmite o singură valoare, concluzia stării. În final integrarea învățării federate ar permite mai multor noduri ESP32 să partajeze îmbunătățiri aduse modelului local către un server central, neavând necesitatea transmiterii datelor brute. Sistemul ar reuși să se adapteze dinamic la noi tipare de uzură.
+	

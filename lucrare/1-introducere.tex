@@ -1,0 +1,21 @@
+\chapter{Introducere}
+
+\section{Prezentarea Generală a Temei}
+	În contextul industrial actual, mentenanța predictivă este tot mai folosită pentru optimizarea costurilor și prevenirea defecțiunii echipamentelor. Motoarele electrice și ansamblurile mecanice rotative sunt predispuse la uzură, dezechilibre și defecte de fixare care, dacă nu sunt identificate la timp, duc la întreruperi semnificative ale operațiunilor. Analiza vibrațiilor mecanice reprezintă una dintre metodele optime din punct de vedere al costurilor pentru monitorizarea sănătății motoarelor și remedierea problemelor în fazele incipiente ale defecțiunilor, deoarece anomaliile fizice generează semnături vibraționale înaintea defectului propriu-zis. \cite{gupta2025embedded, kolok2025low}
+	
+	De obicei monitorizarea automată a funcționării echipamentelor necesita transferarea informațiilor către Cloud pentru procesare. Totuși, această abordare introduce probleme legate de latență, consum energetic și dependență de o rețea stabilă. \cite{bala2024artificial, alfarag3embedded} Lucrarea de față propune mutarea procesării direct pe dispozitiv, eliminând dependența de infrastructura cloud prin tehnologia Edge Computing, aducând inteligența artificială direct la sursa de generare a datelor. \cite{bitam2025artificial}
+
+\section{Scopul și Motivația}
+	Scopul lucrării este dezvoltarea unui sistem embedded autonom, simplu, și cu costuri mici, care să poată monitoriza și diagnostica în timp real starea de funcționare a unui motor pe curent continuu.
+	
+	Motivația acestui proiect este dezvoltarea unei soluții de mentenanță predictivă eficiente, cu un consum redus de energie și un cost hardware minim. Pentru a atinge acest obiectiv, se propune utilizarea unui microcontroler cu resurse limitate (ESP32) \cite{esp32_datasheet} în combinație cu o rețea neuronală convoluțională unidimensională. \cite{kiranyaz20191} Cu ajutorul TinyML putem integra rularea algoritmului direct pe dispozitivul de achiziție, eliminând necesitatea infrastructurii Cloud și oferindu-ne date în timp real. \cite{gupta2025embedded}
+
+
+\section{Contribuția proprie}
+
+	\begin{itemize}
+		\item Proiectarea și asamblarea unui stand experimental de testare, compus dintr-un motor de curent continuu, un driver de control (L298N) și un senzor inerțial (MPU6050) pentru preluarea datelor pe 6 axe. \cite{invensense:mpu6050_datasheet, handson:l298n_module}
+		\item Generarea unui set de date original prin simulare mecanică, în mod controlat, a 5 stări distincte de funcționare (repaus, funcționare normală, dezechilibru mecanic, frecare indusă și slăbit).
+		\item Implementarea unui pipeline complet de preprocesare a datelor, incluzând standardizarea și formatarea secvențială a fluxului de vibrații.
+		\item Arhitecturarea, antrenarea și evaluarea unui algoritm de clasificare bazat pe o rețea 1D CNN împreună cu comparația cu alte metode pentru a stabili cadrul de referință, capabil să extragă automat caracteristicile semnalelor brute și avertizarea utilizatorului în legătură cu apariția unor posibile defecte prin intermediul unei pagini web.
+	\end{itemize}
