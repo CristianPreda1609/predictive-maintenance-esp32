@@ -18,6 +18,58 @@ Parametri de achiziție și model, identici între colectare, antrenare și infe
 | Pini | I2C pe 21/22, PWM motor pe 14 |
 | Placă | ESP32 DOIT DevKit v1 |
 
+## Montaj experimental
+
+![Schema electrică](lucrare/images/Schema_Electrica.png)
+
+Motorul de curent continuu e comandat prin PWM de la ESP32 (pin 14), iar senzorul
+MPU6050 e fixat pe carcasa motorului și citit pe I2C. Cele patru defecte au fost provocate
+fizic, nu simulate: masă adăugată excentric pe ax (dezechilibru), contact abraziv pe
+carcasă (frecare) și șuruburi de prindere slăbite (fixare slabă).
+
+| Normal | Dezechilibru | Frecare | Fixare slabă |
+|---|---|---|---|
+| ![](lucrare/images/Montaj_normal.jpeg) | ![](lucrare/images/Dezechilibru.jpeg) | ![](lucrare/images/Frecare.jpeg) | ![](lucrare/images/Slab_fixat.jpeg) |
+
+Fiecare condiție a fost înregistrată la șase turații (PWM 160, 180, 200, 220, 240, 255),
+câte ~5 minute per combinație, plus o înregistrare de zgomot cu motorul oprit.
+
+## Rezultate
+
+Setul sesiunii 1, împărțit secvențial 80/20 în interiorul fiecărei combinații
+clasă × turație. Ferestre de 128 eșantioane: 6.727 la antrenare, 1.681 la test.
+
+| Metodă | Acuratețe |
+|---|---|
+| Prag fix pe amplitudine, fără ML | 0,28 |
+| K-Means pe caracteristici extrase | 0,85 |
+| SVM | 1,00 |
+| Random Forest | 1,00 |
+| CNN 1D | 1,00 |
+| CNN 2D | 1,00 |
+| CNN 3D | 1,00 |
+
+Pragul fix a fost evaluat pe eșantioane individuale (8.411), restul pe ferestre (1.681).
+Matricele de confuzie sunt în `lucrare/images/` (`baseline_cm.png`, `k_means_cm.png`,
+`svm_cm.png`, `random_forest_cm.png`, `cnn_cm.png`).
+
+| CNN 1D | Prag fix |
+|---|---|
+| ![](lucrare/images/cnn_cm.png) | ![](lucrare/images/baseline_cm.png) |
+
+Diferența dintre 0,28 și 1,00 arată că defectele nu se separă pe amplitudinea brută a
+vibrației, ci pe forma semnalului. Metodele clasice pe caracteristici extrase
+(medie, deviație standard, RMS) ajung și ele la același rezultat, deci problema nu cere
+neapărat o rețea; CNN 1D a fost aleasă pentru că nu necesită extragere manuală de
+caracteristici și încape pe microcontroler.
+
+Acuratețea de 1,00 trebuie citită cu rezerva că împărțirea e secvențială: ferestrele
+vecine se suprapun 50% și provin din aceeași înregistrare continuă, deci setul de test
+nu e complet independent de cel de antrenare.
+
+CNN 1D are 3.093 de parametri; după cuantizare INT8 modelul ocupă 11.560 de octeți în
+memoria flash a plăcii.
+
 ## Structura
 
 | Folder | Conținut |
