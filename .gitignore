@@ -22,6 +22,9 @@ __pycache__/
 *.toc
 *.run.xml
 *.synctex.gz
+*.fdb_latexmk
+*.fls
+*.xdv
 texput.log
 
 # Datele unificate se regenereaza din date_raw cu date_master.py
