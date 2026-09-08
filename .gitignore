@@ -1,0 +1,36 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# PlatformIO / build embedded
+.pio/
+.vscode/
+
+# Asistenti AI
+.continue/
+.cursor/
+
+# LaTeX - artefacte de build
+*.aux
+*.log
+*.bbl
+*.bcf
+*.blg
+*.out
+*.toc
+*.run.xml
+*.synctex.gz
+texput.log
+
+# Datele unificate se regenereaza din date_raw cu date_master.py
+dataset_final.csv
+dataset_final_shuffled.csv
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Document de lucru, nu face parte din proiect
+Plan.md
